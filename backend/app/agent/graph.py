@@ -1,20 +1,3 @@
-# from langgraph.prebuilt import create_react_agent
-
-# from app.llm.groq_client import llm
-# from app.agent.tools import (
-#     get_all_hcp,
-#     get_hcp_by_location,
-#     get_interactions
-# )
-
-# graph = create_react_agent(
-#     llm,
-#     tools=[
-#         get_all_hcp,
-#         get_hcp_by_location,
-#         get_interactions
-#     ]
-# )
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import SystemMessage, HumanMessage
 
