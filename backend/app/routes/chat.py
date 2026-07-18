@@ -1,34 +1,3 @@
-# from fastapi import APIRouter
-
-# from pydantic import BaseModel
-
-# from app.agent.graph import graph
-
-
-# router = APIRouter()
-
-
-# class ChatRequest(BaseModel):
-#     message: str
-
-
-# @router.post("/chat")
-# def chat(request: ChatRequest):
-
-#     response = graph.invoke(
-#         {
-#             "messages": [
-#                 {
-#                     "role": "user",
-#                     "content": request.message
-#                 }
-#             ]
-#         }
-#     )
-
-#     return {
-#         "response": response["messages"][-1].content
-#     }
 from fastapi import APIRouter
 from pydantic import BaseModel
 
