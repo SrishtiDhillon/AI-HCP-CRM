@@ -1,0 +1,45 @@
+# =========================
+# Python / Backend
+# =========================
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.log
+
+# Environment variables
+.env
+backend/.env
+frontend/.env
+
+# Database / local files
+*.db
+*.sqlite3
+
+# =========================
+# Node / Frontend
+# =========================
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+build/
+
+# =========================
+# Editor / OS files
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# =========================
+# Misc
+# =========================
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

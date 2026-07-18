@@ -1,0 +1,58 @@
+# from fastapi import APIRouter
+
+# from pydantic import BaseModel
+
+# from app.agent.graph import graph
+
+
+# router = APIRouter()
+
+
+# class ChatRequest(BaseModel):
+#     message: str
+
+
+# @router.post("/chat")
+# def chat(request: ChatRequest):
+
+#     response = graph.invoke(
+#         {
+#             "messages": [
+#                 {
+#                     "role": "user",
+#                     "content": request.message
+#                 }
+#             ]
+#         }
+#     )
+
+#     return {
+#         "response": response["messages"][-1].content
+#     }
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+from app.agent.graph import run_agent
+
+
+router = APIRouter(
+    prefix="/chat",
+    tags=["AI Chat"]
+)
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    response: str
+
+
+@router.post("/", response_model=ChatResponse)
+def chat(request: ChatRequest):
+    answer = run_agent(request.message)
+
+    return {
+        "response": answer
+    }
