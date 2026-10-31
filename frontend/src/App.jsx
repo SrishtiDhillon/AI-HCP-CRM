@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { addMessage, clearMessages } from "./crmSlice";
+import { buildInteractionPayload } from "./interactionPayload";
 
-const API_URL = "http://127.0.0.1:8000/chat/";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_URL = `${API_BASE}/chat/`;
+const today = () => new Date().toLocaleDateString("en-CA");
 
 function App() {
   const dispatch = useDispatch();
@@ -11,16 +14,18 @@ function App() {
 
   const [chatInput, setChatInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formStatus, setFormStatus] = useState("");
 
   const [formData, setFormData] = useState({
     hcpId: "1",
+    interactionDate: today(),
     summary: "",
     products: "",
     followUpDate: "",
   });
 
   const sendMessage = async (messageText) => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || loading) return;
 
     dispatch(
       addMessage({
@@ -46,7 +51,9 @@ function App() {
       dispatch(
         addMessage({
           sender: "ai",
-          text: "Backend connection failed. Please check if FastAPI is running.",
+          text: typeof error.response?.data?.detail === "string"
+            ? error.response.data.detail
+            : "Could not complete the request. Check the backend connection and try again.",
         })
       );
     } finally {
@@ -56,23 +63,33 @@ function App() {
 
   const handleChatSubmit = (e) => {
     e.preventDefault();
+    if (loading || !chatInput.trim()) return;
     sendMessage(chatInput);
     setChatInput("");
   };
 
-  const handleStructuredSubmit = (e) => {
+  const handleStructuredSubmit = async (e) => {
     e.preventDefault();
-
-    const prompt = `Log an interaction for HCP ID ${formData.hcpId}. Summary: ${formData.summary}. Products discussed: ${formData.products}. Follow up date is ${formData.followUpDate}.`;
-
-    sendMessage(prompt);
-
-    setFormData({
-      hcpId: "1",
-      summary: "",
-      products: "",
-      followUpDate: "",
-    });
+    if (loading) return;
+    setFormStatus("");
+    let payload;
+    try {
+      payload = buildInteractionPayload(formData);
+    } catch (error) {
+      setFormStatus(error.message);
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE}/interaction`, payload);
+      setFormStatus(`Interaction ${response.data.id} saved for HCP ${response.data.hcp_id}.`);
+      setFormData((previous) => ({ ...previous, summary: "", products: "", followUpDate: "" }));
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+      setFormStatus(typeof detail === "string" ? detail : "Could not save. Check the fields and backend connection, then try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,18 +106,28 @@ function App() {
         <section className="card">
           <h2>Structured Log Interaction</h2>
           <p className="muted">
-            Log Healthcare Professional interaction details using a structured CRM form.
+            Log interaction details directly. This form works without an AI API key.
           </p>
 
           <form onSubmit={handleStructuredSubmit} className="form">
             <label>
               HCP ID
               <input
+                type="number"
+                min="1"
+                step="1"
+                required
                 value={formData.hcpId}
                 onChange={(e) =>
                   setFormData({ ...formData, hcpId: e.target.value })
                 }
               />
+            </label>
+
+            <label>
+              Interaction Date
+              <input type="date" required value={formData.interactionDate}
+                onChange={(e) => setFormData({ ...formData, interactionDate: e.target.value })} />
             </label>
 
             <label>
@@ -112,6 +139,7 @@ function App() {
                 }
                 placeholder="Discussed diabetes therapy benefits..."
                 required
+                maxLength={10000}
               />
             </label>
 
@@ -137,7 +165,8 @@ function App() {
               />
             </label>
 
-            <button type="submit">Log Interaction</button>
+            <button type="submit" disabled={loading}>{loading ? "Working..." : "Log Interaction"}</button>
+            {formStatus && <p role="status" className="form-status">{formStatus}</p>}
           </form>
 
           <div className="quick-actions">
@@ -186,7 +215,7 @@ function App() {
               </div>
             ))}
 
-            {loading && <div className="loading">AI is thinking...</div>}
+            {loading && <div className="loading">Request in progress...</div>}
           </div>
 
           <form onSubmit={handleChatSubmit} className="chat-input">
@@ -195,7 +224,7 @@ function App() {
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Ask CRM assistant..."
             />
-            <button type="submit">Send</button>
+            <button type="submit" disabled={loading}>Send</button>
           </form>
         </section>
       </main>

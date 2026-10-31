@@ -209,3 +209,6 @@ button:hover {
     height: 600px;
   }
 }
+button:disabled { opacity: .6; cursor: wait; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 3px solid #9ab6ff; outline-offset: 2px; }
+.form-status { margin: 0; padding: 12px; background: #eef2ff; border-radius: 10px; color: #172033; font-weight: 400; overflow-wrap: anywhere; }

@@ -1,0 +1,80 @@
+
+1. Start without an AI key
+GET /health -> 200
+{
+  "status": "Running"
+}
+
+2. Add a fictional HCP
+POST /hcp -> 200
+{
+  "name": "Dr Demo",
+  "speciality": "Fictional specialty",
+  "hospital": "Example Hospital",
+  "location": "Demo City",
+  "email": "demo@example.com",
+  "phone": "0000000000",
+  "id": 1
+}
+
+3. Log structured data without calling an LLM
+POST /interaction -> 200
+{
+  "hcp_id": 1,
+  "interaction_date": "2026-10-01",
+  "summary": "Discussed an example product demonstration.",
+  "products_discussed": "Example Product",
+  "follow_up_date": null,
+  "id": 1
+}
+
+4. Reject an unknown HCP
+POST /interaction -> 404
+{
+  "detail": "HCP not found"
+}
+
+5. Reject an invalid follow-up date
+POST /interaction -> 422
+{
+  "detail": [
+    {
+      "type": "value_error",
+      "loc": [
+        "body"
+      ],
+      "msg": "Value error, Follow-up date cannot precede interaction date",
+      "input": {
+        "hcp_id": 1,
+        "interaction_date": "2026-10-01",
+        "summary": "Discussed an example product demonstration.",
+        "products_discussed": "Example Product",
+        "follow_up_date": "2026-09-01"
+      },
+      "ctx": {
+        "error": {}
+      }
+    }
+  ]
+}
+
+6. Verify failed requests did not add records
+GET /interaction/1 -> 200
+[
+  {
+    "hcp_id": 1,
+    "interaction_date": "2026-10-01",
+    "summary": "Discussed an example product demonstration.",
+    "products_discussed": "Example Product",
+    "follow_up_date": null,
+    "id": 1
+  }
+]
+
+7. Explain optional AI availability honestly
+POST /chat/ -> 503
+{
+  "detail": "AI chat is not configured. Structured logging is still available."
+}
+
+Demo passed. Temporary database removed; no external AI calls made.
