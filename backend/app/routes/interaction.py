@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -42,6 +42,9 @@ def create_interaction(
     interaction: InteractionCreate,
     db: Session = Depends(get_db)
 ):
+    if not db.get(HCP, interaction.hcp_id):
+        raise HTTPException(status_code=404, detail='HCP not found')
+
     new_interaction = Interaction(
         **interaction.model_dump()
     )
@@ -78,7 +81,10 @@ def update_interaction(
     ).first()
 
     if not existing_interaction:
-        return {"message": "Interaction not found"}
+        raise HTTPException(status_code=404, detail='Interaction not found')
+
+    if not db.get(HCP, interaction.hcp_id):
+        raise HTTPException(status_code=404, detail='HCP not found')
 
     existing_interaction.hcp_id = interaction.hcp_id
     existing_interaction.interaction_date = interaction.interaction_date
@@ -93,7 +99,6 @@ def update_interaction(
 
 
 
-from fastapi import HTTPException
 
 @router.delete("/interaction/{id}")
 def delete_interaction(

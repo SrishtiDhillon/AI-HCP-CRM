@@ -1,31 +1,31 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
+"""Database configuration. SQLite keeps local demos independent of PostgreSQL."""
 import os
+from pathlib import Path
 
-# Load variables from .env
-load_dotenv()
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+load_dotenv(Path(__file__).resolve().parents[2] / '.env')
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./crm_demo.db')
+connect_args = {'check_same_thread': False} if DATABASE_URL.startswith('sqlite:') else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
-# Create database engine
-engine = create_engine(DATABASE_URL)
+if DATABASE_URL.startswith('sqlite:'):
+    @event.listens_for(engine, 'connect')
+    def enable_foreign_keys(connection, _):
+        connection.execute('PRAGMA foreign_keys=ON')
 
-# Create session factory
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-
-# Base class for all database models
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-# Dependency for FastAPI routes
 def get_db():
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

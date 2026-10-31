@@ -1,0 +1,94 @@
+[
+  {
+    "title": "1. Start without an AI key",
+    "request": "GET /health",
+    "status": 200,
+    "response": {
+      "status": "Running"
+    }
+  },
+  {
+    "title": "2. Add a fictional HCP",
+    "request": "POST /hcp",
+    "status": 200,
+    "response": {
+      "name": "Dr Demo",
+      "speciality": "Fictional specialty",
+      "hospital": "Example Hospital",
+      "location": "Demo City",
+      "email": "demo@example.com",
+      "phone": "0000000000",
+      "id": 1
+    }
+  },
+  {
+    "title": "3. Log structured data without calling an LLM",
+    "request": "POST /interaction",
+    "status": 200,
+    "response": {
+      "hcp_id": 1,
+      "interaction_date": "2026-10-01",
+      "summary": "Discussed an example product demonstration.",
+      "products_discussed": "Example Product",
+      "follow_up_date": null,
+      "id": 1
+    }
+  },
+  {
+    "title": "4. Reject an unknown HCP",
+    "request": "POST /interaction",
+    "status": 404,
+    "response": {
+      "detail": "HCP not found"
+    }
+  },
+  {
+    "title": "5. Reject an invalid follow-up date",
+    "request": "POST /interaction",
+    "status": 422,
+    "response": {
+      "detail": [
+        {
+          "type": "value_error",
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, Follow-up date cannot precede interaction date",
+          "input": {
+            "hcp_id": 1,
+            "interaction_date": "2026-10-01",
+            "summary": "Discussed an example product demonstration.",
+            "products_discussed": "Example Product",
+            "follow_up_date": "2026-09-01"
+          },
+          "ctx": {
+            "error": {}
+          }
+        }
+      ]
+    }
+  },
+  {
+    "title": "6. Verify failed requests did not add records",
+    "request": "GET /interaction/1",
+    "status": 200,
+    "response": [
+      {
+        "hcp_id": 1,
+        "interaction_date": "2026-10-01",
+        "summary": "Discussed an example product demonstration.",
+        "products_discussed": "Example Product",
+        "follow_up_date": null,
+        "id": 1
+      }
+    ]
+  },
+  {
+    "title": "7. Explain optional AI availability honestly",
+    "request": "POST /chat/",
+    "status": 503,
+    "response": {
+      "detail": "AI chat is not configured. Structured logging is still available."
+    }
+  }
+]
